@@ -1,0 +1,80 @@
+{
+  "Comment": "State machine to automatically stop RDS instance",
+  "QueryLanguage": "JSONata",
+  "TimeoutSeconds": 3600,
+  "StartAt": "Setup",
+  "States": {
+    "Setup": {
+      "Type": "Pass",
+      "Assign": {
+        "dbStatus": {
+          "wait": [
+            "backing-up",
+            "configuring-enhanced-monitoring",
+            "configuring-iam-database-auth",
+            "configuring-log-exports",
+            "converting-to-vpc",
+            "creating",
+            "maintenance",
+            "modifying",
+            "moving-to-vpc",
+            "rebooting",
+            "resetting-master-credentials",
+            "renaming",
+            "starting",
+            "storage-config-upgrade",
+            "storage-initialization",
+            "storage-optimization",
+            "upgrading"
+          ],
+          "available": [
+            "available",
+            "incompatible-option-group",
+            "incompatible-parameters",
+            "restore-error",
+            "storage-full"
+          ]
+        }
+      },
+      "Next": "DescribeDBStatus"
+    },
+    "DescribeDBStatus": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:rds:describeDBInstances",
+      "Arguments": {
+        "DbInstanceIdentifier": "{{ .DBIdentifier }}"
+      },
+      "Next": "CheckDBStatus"
+    },
+    "CheckDBStatus": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $states.input.DbInstances[0].DbInstanceStatus in $dbStatus.wait %}",
+          "Next": "WaitForDBAvailable"
+        },
+        {
+          "Condition": "{% $states.input.DbInstances[0].DbInstanceStatus in $dbStatus.available %}",
+          "Next": "StopDB"
+        }
+      ],
+      "Default": "DBNotAvailable"
+    },
+    "DBNotAvailable": {
+      "Type": "Succeed"
+    },
+    "WaitForDBAvailable": {
+      "Type": "Wait",
+      "Seconds": 120,
+      "Next": "DescribeDBStatus"
+    },
+    "StopDB": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:rds:stopDBInstance",
+      "Arguments": {
+        "DbInstanceIdentifier": "{{ .DBIdentifier }}"
+      },
+      "End": true
+    }
+  }
+}

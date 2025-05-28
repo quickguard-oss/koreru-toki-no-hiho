@@ -1,0 +1,72 @@
+{
+  "Comment": "State machine to automatically stop Aurora cluster",
+  "QueryLanguage": "JSONata",
+  "TimeoutSeconds": 3600,
+  "StartAt": "Setup",
+  "States": {
+    "Setup": {
+      "Type": "Pass",
+      "Assign": {
+        "dbStatus": {
+          "wait": [
+            "backing-up",
+            "backtracking",
+            "creating",
+            "failing-over",
+            "maintenance",
+            "migrating",
+            "modifying",
+            "promoting",
+            "preparing-data-migration",
+            "renaming",
+            "resetting-master-credentials",
+            "starting",
+            "storage-optimization",
+            "update-iam-db-auth",
+            "upgrading"
+          ],
+          "available": ["available"]
+        }
+      },
+      "Next": "DescribeDBStatus"
+    },
+    "DescribeDBStatus": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:rds:describeDBClusters",
+      "Arguments": {
+        "DbClusterIdentifier": "{{ .DBIdentifier }}"
+      },
+      "Next": "CheckDBStatus"
+    },
+    "CheckDBStatus": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $states.input.DbClusters[0].Status in $dbStatus.wait %}",
+          "Next": "WaitForDBAvailable"
+        },
+        {
+          "Condition": "{% $states.input.DbClusters[0].Status in $dbStatus.available %}",
+          "Next": "StopDB"
+        }
+      ],
+      "Default": "DBNotAvailable"
+    },
+    "DBNotAvailable": {
+      "Type": "Succeed"
+    },
+    "WaitForDBAvailable": {
+      "Type": "Wait",
+      "Seconds": 120,
+      "Next": "DescribeDBStatus"
+    },
+    "StopDB": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:rds:stopDBCluster",
+      "Arguments": {
+        "DbClusterIdentifier": "{{ .DBIdentifier }}"
+      },
+      "End": true
+    }
+  }
+}

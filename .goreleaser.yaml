@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+---
+version: 2
+
+builds:
+  - binary: 'ktnh'
+    flags:
+      - '-v'
+    ldflags:
+      - '-s'
+      - '-w'
+      - '-X github.com/quickguard-oss/koreru-toki-no-hiho/cmd.version={{ .Version }}'
+      - '-X github.com/quickguard-oss/koreru-toki-no-hiho/cmd.commit={{ .ShortCommit }}'
+      - '-X github.com/quickguard-oss/koreru-toki-no-hiho/cmd.built={{ .CommitDate }}'
+    env:
+      - 'CGO_ENABLED=0'
+    goos:
+      - 'linux'
+      - 'windows'
+      - 'darwin'
+    goarch:
+      - 'amd64'
+      - 'arm64'
+    mod_timestamp: '{{ .CommitTimestamp }}'
+
+archives:
+  - formats:
+      - 'tar.xz'
+    name_template: |-
+      {{ .ProjectName }}_{{ .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: 'windows'
+        formats:
+          - 'zip'
+    files:
+      - './LICENSE'
+      - './README.md'
+      - './licenses/**/*'
+
+changelog:
+  sort: 'asc'
+
+checksum:
+  name_template: 'checksums.txt'

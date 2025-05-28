@@ -1,0 +1,214 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'ktnh - Keep Aurora clusters and RDS instances stopped permanently'
+
+Metadata:
+  KTNH:
+    Generator: 'koreru-toki-no-hiho'
+    Version: '1'
+    DBIdentifier: 'rds-db-identifier'
+    DBType: 'rds'
+
+Resources:
+  StateMachineExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: 'ktnh-sfn-rds-db-ide-ghijklm'
+      Description: 'Execution role for the ktnh state machine'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Action: 'sts:AssumeRole'
+            Principal:
+              Service: 'states.amazonaws.com'
+      Policies:
+        - PolicyName: 'rds'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'rds:DescribeDBInstances'
+                  - 'rds:StopDBInstance'
+                Resource:
+                  - !Sub 'arn:aws:rds:${AWS::Region}:${AWS::AccountId}:db:rds-db-identifier'
+        - PolicyName: 'logs'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogDelivery'
+                  - 'logs:GetLogDelivery'
+                  - 'logs:UpdateLogDelivery'
+                  - 'logs:DeleteLogDelivery'
+                  - 'logs:ListLogDeliveries'
+                  - 'logs:PutLogEvents'
+                  - 'logs:PutResourcePolicy'
+                  - 'logs:DescribeResourcePolicies'
+                  - 'logs:DescribeLogGroups'
+                Resource: '*'
+
+  StateMachineLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: 'ktnh-sfn-rds-db-ide-ghijklm'
+      RetentionInDays: 14
+
+  StateMachine:
+    Type: 'AWS::StepFunctions::StateMachine'
+    Properties:
+      StateMachineName: 'ktnh-rds-db-ide-ghijklm'
+      DefinitionString: |-
+        {
+          "Comment": "State machine to automatically stop RDS instance",
+          "QueryLanguage": "JSONata",
+          "TimeoutSeconds": 3600,
+          "StartAt": "Setup",
+          "States": {
+            "Setup": {
+              "Type": "Pass",
+              "Assign": {
+                "dbStatus": {
+                  "wait": [
+                    "backing-up",
+                    "configuring-enhanced-monitoring",
+                    "configuring-iam-database-auth",
+                    "configuring-log-exports",
+                    "converting-to-vpc",
+                    "creating",
+                    "maintenance",
+                    "modifying",
+                    "moving-to-vpc",
+                    "rebooting",
+                    "resetting-master-credentials",
+                    "renaming",
+                    "starting",
+                    "storage-config-upgrade",
+                    "storage-initialization",
+                    "storage-optimization",
+                    "upgrading"
+                  ],
+                  "available": [
+                    "available",
+                    "incompatible-option-group",
+                    "incompatible-parameters",
+                    "restore-error",
+                    "storage-full"
+                  ]
+                }
+              },
+              "Next": "DescribeDBStatus"
+            },
+            "DescribeDBStatus": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::aws-sdk:rds:describeDBInstances",
+              "Arguments": {
+                "DbInstanceIdentifier": "rds-db-identifier"
+              },
+              "Next": "CheckDBStatus"
+            },
+            "CheckDBStatus": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Condition": "{% $states.input.DbInstances[0].DbInstanceStatus in $dbStatus.wait %}",
+                  "Next": "WaitForDBAvailable"
+                },
+                {
+                  "Condition": "{% $states.input.DbInstances[0].DbInstanceStatus in $dbStatus.available %}",
+                  "Next": "StopDB"
+                }
+              ],
+              "Default": "DBNotAvailable"
+            },
+            "DBNotAvailable": {
+              "Type": "Succeed"
+            },
+            "WaitForDBAvailable": {
+              "Type": "Wait",
+              "Seconds": 120,
+              "Next": "DescribeDBStatus"
+            },
+            "StopDB": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::aws-sdk:rds:stopDBInstance",
+              "Arguments": {
+                "DbInstanceIdentifier": "rds-db-identifier"
+              },
+              "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt 'StateMachineExecutionRole.Arn'
+      LoggingConfiguration:
+        Level: 'ALL'
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt 'StateMachineLogGroup.Arn'
+
+  EventsRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: 'ktnh-events-rds-db-ide-ghijklm'
+      Description: 'Role used by EventBridge rule and scheduler to trigger the ktnh state machine'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Action: 'sts:AssumeRole'
+            Principal:
+              Service:
+                - 'events.amazonaws.com'
+                - 'scheduler.amazonaws.com'
+      Policies:
+        - PolicyName: 'statemachine'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'states:StartExecution'
+                Resource: !GetAtt 'StateMachine.Arn'
+
+  RDSAutoStartEventRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Name: 'ktnh-autostart-rds-db-ide-ghijklm'
+      Description: 'Rule to capture Aurora cluster or RDS instance auto-start events and trigger Step Functions'
+      State: 'ENABLED'
+      EventPattern:
+        source:
+          - 'aws.rds'
+        detail-type:
+          - 'RDS DB Instance Event'
+        detail:
+          EventID:
+            - 'RDS-EVENT-0154'
+          SourceIdentifier:
+            - 'rds-db-identifier'
+      Targets:
+        - Id: 'stop'
+          Arn: !GetAtt 'StateMachine.Arn'
+          RoleArn: !GetAtt 'EventsRole.Arn'
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 86400
+            MaximumRetryAttempts: 185
+
+  PeriodicStopSchedule:
+    Type: 'AWS::Scheduler::Schedule'
+    Properties:
+      Name: 'ktnh-periodicstop-rds-db-ide-ghijklm'
+      Description: 'Schedule to stop Aurora cluster or RDS instance every 6 hours as a backup mechanism'
+      State: 'ENABLED'
+      ScheduleExpression: 'rate(6 hours)'
+      Target:
+        Arn: !GetAtt 'StateMachine.Arn'
+        RoleArn: !GetAtt 'EventsRole.Arn'
+        RetryPolicy:
+          MaximumEventAgeInSeconds: 1800
+          MaximumRetryAttempts: 3
+      FlexibleTimeWindow:
+        Mode: 'OFF'
