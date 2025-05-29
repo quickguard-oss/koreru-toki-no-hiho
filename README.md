@@ -38,13 +38,13 @@ graph TD
   style D fill: #44a, stroke: #333, stroke-width: 2px
 ```
 
-| Service               | Description                                                     |
-| --------------------- | --------------------------------------------------------------- |
-| Step Functions        | Executes the database stopping workflow                         |
-| EventBridge Rules     | Catches Aurora/RDS startup events and triggers the stop process |
-| EventBridge Scheduler | Periodically invokes the stop process as a backup mechanism     |
+| Service               | Description                                                        |
+| --------------------- | ------------------------------------------------------------------ |
+| Step Functions        | Executes the database stopping workflow                            |
+| EventBridge Rules     | Catches Aurora/RDS startup events and triggers the stop process    |
+| EventBridge Scheduler | Periodically invokes the stop process as a supplementary mechanism |
 
-1. StepFunctions workflow:
+1. Step Functions workflow:
 
    ```mermaid
     stateDiagram-v2
