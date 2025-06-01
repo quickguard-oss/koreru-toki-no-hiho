@@ -41,7 +41,7 @@ graph TD
 | Service               | Description                                                        |
 | --------------------- | ------------------------------------------------------------------ |
 | Step Functions        | Executes the database stopping workflow                            |
-| EventBridge Rules     | Catches Aurora/RDS startup events and triggers the stop process    |
+| EventBridge Rule      | Catches Aurora/RDS startup events and triggers the stop process    |
 | EventBridge Scheduler | Periodically invokes the stop process as a supplementary mechanism |
 
 1. Step Functions workflow:
