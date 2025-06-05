@@ -33,6 +33,7 @@ build: clean
 			-X github.com/quickguard-oss/koreru-toki-no-hiho/cmd.version=$$( git describe --tags --always --dirty 2> /dev/null || echo 'dev' ) \
 			-X github.com/quickguard-oss/koreru-toki-no-hiho/cmd.commit=$$( git rev-parse --short 'HEAD' 2> /dev/null || echo 'HEAD' ) \
 			-X github.com/quickguard-oss/koreru-toki-no-hiho/cmd.built=$$( date -u '+%FT%TZ' ) \
+			-X github.com/quickguard-oss/koreru-toki-no-hiho/cmd.versionOverridden=true \
 		" \
 		-v \
 		-o ktnh ./
