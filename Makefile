@@ -25,7 +25,7 @@ generate:
 # Build the binary.
 #
 .PHONY: build
-build: clean generate
+build: clean
 	@echo 'Building ktnh binary...'
 
 	go build \
@@ -46,7 +46,6 @@ clean:
 
 	rm -rf \
 	  ./ktnh \
-	  ./internal/pkg/cfn/template_def.go \
 	  ./dist/ \
 	  ./licenses/
 
@@ -74,7 +73,7 @@ license:
 # Release the binary.
 #
 .PHONY: release
-release: clean generate license
+release: clean license
 	@echo 'Releasing ktnh binary...'
 
 	go tool goreleaser release --clean
