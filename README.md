@@ -13,6 +13,7 @@ This tool creates and manages the necessary AWS resources using CloudFormation.
 
 ```bash
 $ go install github.com/quickguard-oss/koreru-toki-no-hiho@latest
+$ alias ktnh="${GOPATH}/bin/koreru-toki-no-hiho"
 ```
 
 or you can also download pre-compiled binaries for your platform from the [GitHub Releases page](https://github.com/quickguard-oss/koreru-toki-no-hiho/releases).
