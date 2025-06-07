@@ -1,7 +1,6 @@
 package cfn
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -16,14 +15,17 @@ func Test_GetKTNHMetadata(t *testing.T) {
 	testCases := []struct {
 		name      string
 		stackName string
-		mockSetup func(*appmock.MockCloudFormationClient)
+		mockSetup func(*appmock.MockCloudFormationFactory, *appmock.MockCloudFormationClient)
 		expected  *ktnhMetadata
 		wantErr   bool
 	}{
 		{
 			name:      "Valid",
 			stackName: "valid-stack",
-			mockSetup: func(c *appmock.MockCloudFormationClient) {
+			mockSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &cloudformation.GetTemplateInput{
 					StackName: aws.String("valid-stack"),
 				}
@@ -55,7 +57,10 @@ Metadata:
 		{
 			name:      "API error",
 			stackName: "api-error-stack",
-			mockSetup: func(c *appmock.MockCloudFormationClient) {
+			mockSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &cloudformation.GetTemplateInput{
 					StackName: aws.String("api-error-stack"),
 				}
@@ -63,7 +68,7 @@ Metadata:
 				result := &cloudformation.GetTemplateOutput{}
 
 				c.On("GetTemplate", mock.Anything, params, mock.Anything).
-					Return(result, fmt.Errorf("Error"))
+					Return(result, assert.AnError)
 			},
 			expected: nil,
 			wantErr:  true,
@@ -71,7 +76,10 @@ Metadata:
 		{
 			name:      "Invalid template",
 			stackName: "invalid-template-stack",
-			mockSetup: func(c *appmock.MockCloudFormationClient) {
+			mockSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &cloudformation.GetTemplateInput{
 					StackName: aws.String("invalid-template-stack"),
 				}
@@ -90,20 +98,14 @@ Metadata:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			mockFactory := new(appmock.MockCloudFormationFactory)
 			mockClient := new(appmock.MockCloudFormationClient)
 
-			tc.mockSetup(mockClient)
-
-			mockFactory := new(appmock.MockCloudFormationFactory)
-
-			mockFactory.On("GetClient").Return(mockClient)
+			tc.mockSetup(mockFactory, mockClient)
 
 			c := NewCloudFormation(mockFactory)
 
 			got, err := c.GetKTNHMetadata(tc.stackName)
-
-			mockClient.AssertExpectations(t)
-			mockFactory.AssertExpectations(t)
 
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
@@ -112,6 +114,9 @@ Metadata:
 
 				assert.Equal(t, tc.expected, got, "Metadata does not match expected value")
 			}
+
+			mockFactory.AssertExpectations(t)
+			mockClient.AssertExpectations(t)
 		})
 	}
 }

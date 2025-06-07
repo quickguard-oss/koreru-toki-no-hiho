@@ -28,8 +28,8 @@ func generateQualifier() string {
 /*
 Template generates a CloudFormation template.
 */
-func (s *ktnh) Template() (templateBody string, qualifier string, err error) {
-	dbType, err := s.rds.DetermineDBType(s.dbIdentifier)
+func (k *ktnh) Template() (templateBody string, qualifier string, err error) {
+	dbType, err := k.rds.DetermineDBType(k.dbIdentifier)
 
 	if err != nil {
 		return "", "", fmt.Errorf("failed to determine DB type: %w", err)
@@ -37,7 +37,7 @@ func (s *ktnh) Template() (templateBody string, qualifier string, err error) {
 
 	qualifier = generateQualifier()
 
-	templateBody, err = cfn.GenerateTemplateBody(s.dbIdentifier, s.dbIdentifierShort, string(dbType), qualifier)
+	templateBody, err = cfn.GenerateTemplateBody(k.dbIdentifier, k.dbIdentifierShort, string(dbType), qualifier)
 
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate CloudFormation template: %w", err)

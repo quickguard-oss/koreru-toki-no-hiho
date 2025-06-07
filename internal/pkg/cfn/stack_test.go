@@ -1,7 +1,6 @@
 package cfn
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -18,14 +17,17 @@ func Test_CreateStack(t *testing.T) {
 		name         string
 		stackName    string
 		templateBody string
-		mockSetup    func(*appmock.MockCloudFormationClient)
+		mockSetup    func(*appmock.MockCloudFormationFactory, *appmock.MockCloudFormationClient)
 		wantErr      bool
 	}{
 		{
 			name:         "Success",
 			stackName:    "success-stack",
 			templateBody: "{a: 1}",
-			mockSetup: func(c *appmock.MockCloudFormationClient) {
+			mockSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &cloudformation.CreateStackInput{
 					StackName:    aws.String("success-stack"),
 					TemplateBody: aws.String("{a: 1}"),
@@ -43,7 +45,10 @@ func Test_CreateStack(t *testing.T) {
 			name:         "API error",
 			stackName:    "api-error-stack",
 			templateBody: "[]",
-			mockSetup: func(c *appmock.MockCloudFormationClient) {
+			mockSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &cloudformation.CreateStackInput{
 					StackName:    aws.String("api-error-stack"),
 					TemplateBody: aws.String("[]"),
@@ -53,7 +58,7 @@ func Test_CreateStack(t *testing.T) {
 				result := &cloudformation.CreateStackOutput{}
 
 				c.On("CreateStack", mock.Anything, params, mock.Anything).
-					Return(result, fmt.Errorf("Error"))
+					Return(result, assert.AnError)
 			},
 			wantErr: true,
 		},
@@ -61,26 +66,23 @@ func Test_CreateStack(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			mockFactory := new(appmock.MockCloudFormationFactory)
 			mockClient := new(appmock.MockCloudFormationClient)
 
-			tc.mockSetup(mockClient)
-
-			mockFactory := new(appmock.MockCloudFormationFactory)
-
-			mockFactory.On("GetClient").Return(mockClient)
+			tc.mockSetup(mockFactory, mockClient)
 
 			c := NewCloudFormation(mockFactory)
 
 			err := c.CreateStack(tc.stackName, tc.templateBody)
-
-			mockClient.AssertExpectations(t)
-			mockFactory.AssertExpectations(t)
 
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
 			} else {
 				assert.NoError(t, err, "Unexpected error occurred")
 			}
+
+			mockFactory.AssertExpectations(t)
+			mockClient.AssertExpectations(t)
 		})
 	}
 }
@@ -89,13 +91,16 @@ func Test_DeleteStack(t *testing.T) {
 	testCases := []struct {
 		name      string
 		stackName string
-		mockSetup func(*appmock.MockCloudFormationClient)
+		mockSetup func(*appmock.MockCloudFormationFactory, *appmock.MockCloudFormationClient)
 		wantErr   bool
 	}{
 		{
 			name:      "Success",
 			stackName: "success-stack",
-			mockSetup: func(c *appmock.MockCloudFormationClient) {
+			mockSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &cloudformation.DeleteStackInput{
 					StackName: aws.String("success-stack"),
 				}
@@ -110,7 +115,10 @@ func Test_DeleteStack(t *testing.T) {
 		{
 			name:      "API error",
 			stackName: "api-error-stack",
-			mockSetup: func(c *appmock.MockCloudFormationClient) {
+			mockSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &cloudformation.DeleteStackInput{
 					StackName: aws.String("api-error-stack"),
 				}
@@ -118,7 +126,7 @@ func Test_DeleteStack(t *testing.T) {
 				result := &cloudformation.DeleteStackOutput{}
 
 				c.On("DeleteStack", mock.Anything, params, mock.Anything).
-					Return(result, fmt.Errorf("Error"))
+					Return(result, assert.AnError)
 			},
 			wantErr: true,
 		},
@@ -126,26 +134,23 @@ func Test_DeleteStack(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			mockFactory := new(appmock.MockCloudFormationFactory)
 			mockClient := new(appmock.MockCloudFormationClient)
 
-			tc.mockSetup(mockClient)
-
-			mockFactory := new(appmock.MockCloudFormationFactory)
-
-			mockFactory.On("GetClient").Return(mockClient)
+			tc.mockSetup(mockFactory, mockClient)
 
 			c := NewCloudFormation(mockFactory)
 
 			err := c.DeleteStack(tc.stackName)
-
-			mockClient.AssertExpectations(t)
-			mockFactory.AssertExpectations(t)
 
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
 			} else {
 				assert.NoError(t, err, "Unexpected error occurred")
 			}
+
+			mockFactory.AssertExpectations(t)
+			mockClient.AssertExpectations(t)
 		})
 	}
 }
@@ -314,7 +319,7 @@ func Test_ListStacks(t *testing.T) {
 			evaluator: nil,
 			mockSetup: func(f *appmock.MockCloudFormationFactory, p *appmock.MockListStacksPaginator) {
 				f.On("NewListStacksPaginator", mock.Anything).
-					Return(nil, fmt.Errorf("Error"))
+					Return(nil, assert.AnError)
 			},
 			expectedStacks: nil,
 			wantErr:        true,
@@ -333,7 +338,7 @@ func Test_ListStacks(t *testing.T) {
 				result := &cloudformation.ListStacksOutput{}
 
 				p.On("NextPage", mock.Anything, mock.Anything).
-					Return(result, fmt.Errorf("Error")).
+					Return(result, assert.AnError).
 					Once()
 			},
 			expectedStacks: nil,
@@ -343,17 +348,14 @@ func Test_ListStacks(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockPaginator := new(appmock.MockListStacksPaginator)
 			mockFactory := new(appmock.MockCloudFormationFactory)
+			mockPaginator := new(appmock.MockListStacksPaginator)
 
 			tc.mockSetup(mockFactory, mockPaginator)
 
 			c := NewCloudFormation(mockFactory)
 
 			got, err := c.ListStacks(tc.evaluator)
-
-			mockPaginator.AssertExpectations(t)
-			mockFactory.AssertExpectations(t)
 
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
@@ -362,6 +364,9 @@ func Test_ListStacks(t *testing.T) {
 
 				assert.ElementsMatch(t, tc.expectedStacks, got)
 			}
+
+			mockFactory.AssertExpectations(t)
+			mockPaginator.AssertExpectations(t)
 		})
 	}
 }

@@ -1,7 +1,6 @@
 package ktnh
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -25,7 +24,7 @@ func Test_Defrost(t *testing.T) {
 		dbIdentifierShort        string
 		stackNamePrefix          string
 		timeout                  time.Duration
-		mockDetermineDBTypeSetup func(*appmock.MockRDSClient)
+		mockDetermineDBTypeSetup func(*appmock.MockRDSFactory, *appmock.MockRDSClient)
 		mockListStacksSetup      func(*appmock.MockCloudFormationFactory, *appmock.MockListStacksPaginator)
 		mockGetTemplateSetup     func(*appmock.MockCloudFormationFactory, *appmock.MockCloudFormationClient)
 		mockDeleteStackSetup     func(*appmock.MockCloudFormationClient)
@@ -38,7 +37,10 @@ func Test_Defrost(t *testing.T) {
 			dbIdentifierShort: "db-1-12345",
 			stackNamePrefix:   "A",
 			timeout:           time.Minute * 5,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-1-1234567890"),
 				}
@@ -159,7 +161,10 @@ Metadata:
 			dbIdentifierShort: "db-2-12345",
 			stackNamePrefix:   "B",
 			timeout:           0,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-2-1234567890"),
 				}
@@ -246,7 +251,10 @@ Metadata:
 			dbIdentifierShort: "db-3-12345",
 			stackNamePrefix:   "C",
 			timeout:           time.Minute * 5,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-3-1234567890"),
 				}
@@ -254,7 +262,7 @@ Metadata:
 				result := &rds.DescribeDBClustersOutput{}
 
 				c.On("DescribeDBClusters", mock.Anything, params, mock.Anything).
-					Return(result, fmt.Errorf("Error"))
+					Return(result, assert.AnError)
 			},
 			mockListStacksSetup:  func(f *appmock.MockCloudFormationFactory, p *appmock.MockListStacksPaginator) {},
 			mockGetTemplateSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {},
@@ -268,7 +276,10 @@ Metadata:
 			dbIdentifierShort: "db-4-12345",
 			stackNamePrefix:   "D",
 			timeout:           time.Minute * 5,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-4-1234567890"),
 				}
@@ -315,7 +326,10 @@ Metadata:
 			dbIdentifierShort: "db-5-12345",
 			stackNamePrefix:   "E",
 			timeout:           time.Minute * 5,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-5-1234567890"),
 				}
@@ -388,7 +402,7 @@ Metadata:
 				result := &cloudformation.DeleteStackOutput{}
 
 				c.On("DeleteStack", mock.Anything, params, mock.Anything).
-					Return(result, fmt.Errorf("Error"))
+					Return(result, assert.AnError)
 			},
 			mockWaitSetup: func(f *appmock.MockCloudFormationFactory, w *appmock.MockStackDeleteCompleteWaiter) {},
 			wantErr:       true,
@@ -399,7 +413,10 @@ Metadata:
 			dbIdentifierShort: "db-6-12345",
 			stackNamePrefix:   "F",
 			timeout:           time.Minute * 5,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-6-1234567890"),
 				}
@@ -476,7 +493,7 @@ Metadata:
 			},
 			mockWaitSetup: func(f *appmock.MockCloudFormationFactory, w *appmock.MockStackDeleteCompleteWaiter) {
 				f.On("NewStackDeleteCompleteWaiter").
-					Return(nil, fmt.Errorf("Error"))
+					Return(nil, assert.AnError)
 			},
 			wantErr: true,
 		},
@@ -484,28 +501,17 @@ Metadata:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockClientRDS := new(appmock.MockRDSClient)
-
-			tc.mockDetermineDBTypeSetup(mockClientRDS)
-
 			mockFactoryRDS := new(appmock.MockRDSFactory)
-
-			mockFactoryRDS.On("GetClient").Return(mockClientRDS)
-
+			mockClientRDS := new(appmock.MockRDSClient)
 			mockFactoryCloudFormation := new(appmock.MockCloudFormationFactory)
-
-			mockPaginator := new(appmock.MockListStacksPaginator)
-
-			tc.mockListStacksSetup(mockFactoryCloudFormation, mockPaginator)
-
 			mockClientCloudFormation := new(appmock.MockCloudFormationClient)
-
-			tc.mockGetTemplateSetup(mockFactoryCloudFormation, mockClientCloudFormation)
-
-			tc.mockDeleteStackSetup(mockClientCloudFormation)
-
+			mockPaginator := new(appmock.MockListStacksPaginator)
 			mockWaiter := new(appmock.MockStackDeleteCompleteWaiter)
 
+			tc.mockDetermineDBTypeSetup(mockFactoryRDS, mockClientRDS)
+			tc.mockListStacksSetup(mockFactoryCloudFormation, mockPaginator)
+			tc.mockGetTemplateSetup(mockFactoryCloudFormation, mockClientCloudFormation)
+			tc.mockDeleteStackSetup(mockClientCloudFormation)
 			tc.mockWaitSetup(mockFactoryCloudFormation, mockWaiter)
 
 			k := &ktnh{
@@ -518,19 +524,18 @@ Metadata:
 
 			err := k.Defrost(tc.timeout)
 
-			mockClientRDS.AssertExpectations(t)
-			mockFactoryRDS.AssertExpectations(t)
-
-			mockClientCloudFormation.AssertExpectations(t)
-			mockPaginator.AssertExpectations(t)
-			mockWaiter.AssertExpectations(t)
-			mockFactoryCloudFormation.AssertExpectations(t)
-
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
 			} else {
 				assert.NoError(t, err, "Unexpected error occurred")
 			}
+
+			mockFactoryRDS.AssertExpectations(t)
+			mockClientRDS.AssertExpectations(t)
+			mockFactoryCloudFormation.AssertExpectations(t)
+			mockClientCloudFormation.AssertExpectations(t)
+			mockPaginator.AssertExpectations(t)
+			mockWaiter.AssertExpectations(t)
 		})
 	}
 }

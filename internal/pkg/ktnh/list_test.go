@@ -1,7 +1,6 @@
 package ktnh
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -173,7 +172,7 @@ Metadata:
 			stackNamePrefix: "C",
 			mockListStacksSetup: func(f *appmock.MockCloudFormationFactory, p *appmock.MockListStacksPaginator) {
 				f.On("NewListStacksPaginator", mock.Anything).
-					Return(nil, fmt.Errorf("Error"))
+					Return(nil, assert.AnError)
 			},
 			mockGetTemplateSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {},
 			expected:             nil,
@@ -220,7 +219,7 @@ Metadata:
 				result1 := &cloudformation.GetTemplateOutput{}
 
 				c.On("GetTemplate", mock.Anything, params1, mock.Anything).
-					Return(result1, fmt.Errorf("Error")).
+					Return(result1, assert.AnError).
 					Once()
 
 				params2 := &cloudformation.GetTemplateInput{
@@ -336,13 +335,10 @@ Metadata:
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockFactory := new(appmock.MockCloudFormationFactory)
-
+			mockClient := new(appmock.MockCloudFormationClient)
 			mockPaginator := new(appmock.MockListStacksPaginator)
 
 			tc.mockListStacksSetup(mockFactory, mockPaginator)
-
-			mockClient := new(appmock.MockCloudFormationClient)
-
 			tc.mockGetTemplateSetup(mockFactory, mockClient)
 
 			k := &ktnh{
@@ -352,10 +348,6 @@ Metadata:
 
 			got, err := k.List()
 
-			mockClient.AssertExpectations(t)
-			mockPaginator.AssertExpectations(t)
-			mockFactory.AssertExpectations(t)
-
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
 			} else {
@@ -363,6 +355,10 @@ Metadata:
 
 				assert.Equal(t, tc.expected, got, "Output lines do not match expected lines")
 			}
+
+			mockFactory.AssertExpectations(t)
+			mockClient.AssertExpectations(t)
+			mockPaginator.AssertExpectations(t)
 		})
 	}
 }

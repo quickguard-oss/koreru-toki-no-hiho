@@ -69,8 +69,6 @@ func (c *CloudFormation) ListStacks(evaluator stackEvaluator) ([]string, error) 
 
 	slog.Debug("Starting CloudFormation stack listing")
 
-	ctx := context.Background()
-
 	if evaluator == nil {
 		slog.Debug("No evaluator provided, returning all stacks")
 
@@ -110,6 +108,8 @@ func (c *CloudFormation) ListStacks(evaluator stackEvaluator) ([]string, error) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ListStacks paginator: %w", err)
 	}
+
+	ctx := context.Background()
 
 	for paginator.HasMorePages() {
 		output, err := paginator.NextPage(ctx)

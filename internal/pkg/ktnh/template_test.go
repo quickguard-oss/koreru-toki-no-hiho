@@ -19,13 +19,16 @@ func Test_Template(t *testing.T) {
 	testCases := []struct {
 		name         string
 		dbIdentifier string
-		mockSetup    func(*appmock.MockRDSClient)
+		mockSetup    func(*appmock.MockRDSFactory, *appmock.MockRDSClient)
 		wantErr      bool
 	}{
 		{
 			name:         "Aurora",
 			dbIdentifier: "db-1",
-			mockSetup: func(c *appmock.MockRDSClient) {
+			mockSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params1 := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-1"),
 				}
@@ -46,7 +49,10 @@ func Test_Template(t *testing.T) {
 		{
 			name:         "RDS",
 			dbIdentifier: "db-2",
-			mockSetup: func(c *appmock.MockRDSClient) {
+			mockSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params1 := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-2"),
 				}
@@ -76,7 +82,10 @@ func Test_Template(t *testing.T) {
 		{
 			name:         "Error during determining DB type",
 			dbIdentifier: "db-3",
-			mockSetup: func(c *appmock.MockRDSClient) {
+			mockSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params1 := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-3"),
 				}
@@ -84,7 +93,7 @@ func Test_Template(t *testing.T) {
 				result1 := &rds.DescribeDBClustersOutput{}
 
 				c.On("DescribeDBClusters", mock.Anything, params1, mock.Anything).
-					Return(result1, fmt.Errorf("Error"))
+					Return(result1, assert.AnError)
 			},
 			wantErr: true,
 		},
@@ -92,13 +101,10 @@ func Test_Template(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			mockFactory := new(appmock.MockRDSFactory)
 			mockClient := new(appmock.MockRDSClient)
 
-			tc.mockSetup(mockClient)
-
-			mockFactory := new(appmock.MockRDSFactory)
-
-			mockFactory.On("GetClient").Return(mockClient)
+			tc.mockSetup(mockFactory, mockClient)
 
 			k := &ktnh{
 				dbIdentifier:      tc.dbIdentifier,
@@ -107,9 +113,6 @@ func Test_Template(t *testing.T) {
 			}
 
 			templateBody, qualifier, err := k.Template()
-
-			mockClient.AssertExpectations(t)
-			mockFactory.AssertExpectations(t)
 
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
@@ -125,6 +128,9 @@ func Test_Template(t *testing.T) {
 
 				assert.Regexp(t, "^[A-Za-z0-9]{6}$", qualifier, "Qualifier should only contain alphanumeric characters and be exactly 6 characters long")
 			}
+
+			mockFactory.AssertExpectations(t)
+			mockClient.AssertExpectations(t)
 		})
 	}
 }

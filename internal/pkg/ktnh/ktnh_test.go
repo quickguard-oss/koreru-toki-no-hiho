@@ -1,7 +1,6 @@
 package ktnh
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -133,7 +132,7 @@ func Test_findMatchingStack(t *testing.T) {
 		dbIdentifier             string
 		dbIdentifierShort        string
 		stackNamePrefix          string
-		mockDetermineDBTypeSetup func(*appmock.MockRDSClient)
+		mockDetermineDBTypeSetup func(*appmock.MockRDSFactory, *appmock.MockRDSClient)
 		mockListStacksSetup      func(*appmock.MockCloudFormationFactory, *appmock.MockListStacksPaginator)
 		mockGetTemplateSetup     func(*appmock.MockCloudFormationFactory, *appmock.MockCloudFormationClient)
 		expectedStackName        string
@@ -145,7 +144,10 @@ func Test_findMatchingStack(t *testing.T) {
 			dbIdentifier:      "db-1-1234567890",
 			dbIdentifierShort: "db-1-12345",
 			stackNamePrefix:   "A",
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-1-1234567890"),
 				}
@@ -246,7 +248,10 @@ Metadata:
 			dbIdentifier:      "db-2-1234567890",
 			dbIdentifierShort: "db-2-12345",
 			stackNamePrefix:   "B",
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-2-1234567890"),
 				}
@@ -292,7 +297,10 @@ Metadata:
 			dbIdentifier:      "db-3-1234567890",
 			dbIdentifierShort: "db-3-12345",
 			stackNamePrefix:   "C",
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-3-1234567890"),
 				}
@@ -300,7 +308,7 @@ Metadata:
 				result := &rds.DescribeDBClustersOutput{}
 
 				c.On("DescribeDBClusters", mock.Anything, params, mock.Anything).
-					Return(result, fmt.Errorf("Error"))
+					Return(result, assert.AnError)
 			},
 			mockListStacksSetup:  func(f *appmock.MockCloudFormationFactory, p *appmock.MockListStacksPaginator) {},
 			mockGetTemplateSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {},
@@ -313,7 +321,10 @@ Metadata:
 			dbIdentifier:      "db-4-1234567890",
 			dbIdentifierShort: "db-4-12345",
 			stackNamePrefix:   "[invalid regex",
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-4-1234567890"),
 				}
@@ -340,7 +351,10 @@ Metadata:
 			dbIdentifier:      "db-5-1234567890",
 			dbIdentifierShort: "db-5-12345",
 			stackNamePrefix:   "D",
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-5-1234567890"),
 				}
@@ -358,7 +372,7 @@ Metadata:
 			},
 			mockListStacksSetup: func(f *appmock.MockCloudFormationFactory, p *appmock.MockListStacksPaginator) {
 				f.On("NewListStacksPaginator", mock.Anything).
-					Return(nil, fmt.Errorf("Error"))
+					Return(nil, assert.AnError)
 			},
 			mockGetTemplateSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {},
 			expectedStackName:    "",
@@ -370,7 +384,10 @@ Metadata:
 			dbIdentifier:      "db-6-1234567890",
 			dbIdentifierShort: "db-6-12345",
 			stackNamePrefix:   "E",
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-6-1234567890"),
 				}
@@ -468,7 +485,10 @@ Metadata:
 			dbIdentifier:      "db-7-1234567890",
 			dbIdentifierShort: "db-7-12345",
 			stackNamePrefix:   "F",
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-7-1234567890"),
 				}
@@ -522,7 +542,7 @@ Metadata:
 				result1 := &cloudformation.GetTemplateOutput{}
 
 				c.On("GetTemplate", mock.Anything, params1, mock.Anything).
-					Return(result1, fmt.Errorf("Error")).
+					Return(result1, assert.AnError).
 					Once()
 
 				params2 := &cloudformation.GetTemplateInput{
@@ -555,7 +575,10 @@ Metadata:
 			dbIdentifier:      "db-8-1234567890",
 			dbIdentifierShort: "db-8-12345",
 			stackNamePrefix:   "G",
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-8-1234567890"),
 				}
@@ -651,22 +674,14 @@ Metadata:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockClientRDS := new(appmock.MockRDSClient)
-
-			tc.mockDetermineDBTypeSetup(mockClientRDS)
-
 			mockFactoryRDS := new(appmock.MockRDSFactory)
-
-			mockFactoryRDS.On("GetClient").Return(mockClientRDS)
-
+			mockClientRDS := new(appmock.MockRDSClient)
 			mockFactoryCloudFormation := new(appmock.MockCloudFormationFactory)
-
+			mockClientCloudFormation := new(appmock.MockCloudFormationClient)
 			mockPaginator := new(appmock.MockListStacksPaginator)
 
+			tc.mockDetermineDBTypeSetup(mockFactoryRDS, mockClientRDS)
 			tc.mockListStacksSetup(mockFactoryCloudFormation, mockPaginator)
-
-			mockClientCloudFormation := new(appmock.MockCloudFormationClient)
-
 			tc.mockGetTemplateSetup(mockFactoryCloudFormation, mockClientCloudFormation)
 
 			k := &ktnh{
@@ -679,13 +694,6 @@ Metadata:
 
 			stackName, found, err := k.findMatchingStack()
 
-			mockClientRDS.AssertExpectations(t)
-			mockFactoryRDS.AssertExpectations(t)
-
-			mockClientCloudFormation.AssertExpectations(t)
-			mockPaginator.AssertExpectations(t)
-			mockFactoryCloudFormation.AssertExpectations(t)
-
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
 			} else {
@@ -694,6 +702,12 @@ Metadata:
 				assert.Equal(t, tc.expectedFound, found, "Found flag does not match expected value")
 				assert.Equal(t, tc.expectedStackName, stackName, "Stack name does not match expected value")
 			}
+
+			mockFactoryRDS.AssertExpectations(t)
+			mockClientRDS.AssertExpectations(t)
+			mockFactoryCloudFormation.AssertExpectations(t)
+			mockClientCloudFormation.AssertExpectations(t)
+			mockPaginator.AssertExpectations(t)
 		})
 	}
 }

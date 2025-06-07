@@ -1,7 +1,6 @@
 package cfn
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -51,7 +50,7 @@ func Test_WaitForStackCreation(t *testing.T) {
 				}
 
 				w.On("Wait", mock.Anything, params, time.Second*30, mock.Anything).
-					Return(fmt.Errorf("Waiter timed out"))
+					Return(assert.AnError)
 			},
 			wantErr: true,
 		},
@@ -61,7 +60,7 @@ func Test_WaitForStackCreation(t *testing.T) {
 			timeout:   time.Minute * 5,
 			mockSetup: func(f *appmock.MockCloudFormationFactory, w *appmock.MockStackCreateCompleteWaiter) {
 				f.On("NewStackCreateCompleteWaiter").
-					Return(nil, fmt.Errorf("Error"))
+					Return(nil, assert.AnError)
 			},
 			wantErr: true,
 		},
@@ -69,8 +68,8 @@ func Test_WaitForStackCreation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockWaiter := new(appmock.MockStackCreateCompleteWaiter)
 			mockFactory := new(appmock.MockCloudFormationFactory)
+			mockWaiter := new(appmock.MockStackCreateCompleteWaiter)
 
 			tc.mockSetup(mockFactory, mockWaiter)
 
@@ -78,14 +77,14 @@ func Test_WaitForStackCreation(t *testing.T) {
 
 			err := c.WaitForStackCreation(tc.stackName, tc.timeout)
 
-			mockWaiter.AssertExpectations(t)
-			mockFactory.AssertExpectations(t)
-
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
 			} else {
 				assert.NoError(t, err, "Unexpected error occurred")
 			}
+
+			mockFactory.AssertExpectations(t)
+			mockWaiter.AssertExpectations(t)
 		})
 	}
 }
@@ -128,7 +127,7 @@ func Test_WaitForStackDeletion(t *testing.T) {
 				}
 
 				w.On("Wait", mock.Anything, params, time.Second*30, mock.Anything).
-					Return(fmt.Errorf("Waiter timed out"))
+					Return(assert.AnError)
 			},
 			wantErr: true,
 		},
@@ -138,7 +137,7 @@ func Test_WaitForStackDeletion(t *testing.T) {
 			timeout:   time.Minute * 5,
 			mockSetup: func(f *appmock.MockCloudFormationFactory, w *appmock.MockStackDeleteCompleteWaiter) {
 				f.On("NewStackDeleteCompleteWaiter").
-					Return(nil, fmt.Errorf("Error"))
+					Return(nil, assert.AnError)
 			},
 			wantErr: true,
 		},
@@ -146,8 +145,8 @@ func Test_WaitForStackDeletion(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockWaiter := new(appmock.MockStackDeleteCompleteWaiter)
 			mockFactory := new(appmock.MockCloudFormationFactory)
+			mockWaiter := new(appmock.MockStackDeleteCompleteWaiter)
 
 			tc.mockSetup(mockFactory, mockWaiter)
 
@@ -155,14 +154,14 @@ func Test_WaitForStackDeletion(t *testing.T) {
 
 			err := c.WaitForStackDeletion(tc.stackName, tc.timeout)
 
-			mockWaiter.AssertExpectations(t)
-			mockFactory.AssertExpectations(t)
-
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
 			} else {
 				assert.NoError(t, err, "Unexpected error occurred")
 			}
+
+			mockFactory.AssertExpectations(t)
+			mockWaiter.AssertExpectations(t)
 		})
 	}
 }

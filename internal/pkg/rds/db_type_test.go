@@ -17,14 +17,17 @@ func Test_DetermineDBType(t *testing.T) {
 	testCases := []struct {
 		name         string
 		dbIdentifier string
-		mockSetup    func(*appmock.MockRDSClient)
+		mockSetup    func(*appmock.MockRDSFactory, *appmock.MockRDSClient)
 		expected     dbType
 		wantErr      bool
 	}{
 		{
 			name:         "Aurora cluster",
 			dbIdentifier: "aurora-cluster-db",
-			mockSetup: func(c *appmock.MockRDSClient) {
+			mockSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params1 := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("aurora-cluster-db"),
 				}
@@ -46,7 +49,10 @@ func Test_DetermineDBType(t *testing.T) {
 		{
 			name:         "RDS instance",
 			dbIdentifier: "rds-instance-db",
-			mockSetup: func(c *appmock.MockRDSClient) {
+			mockSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params1 := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("rds-instance-db"),
 				}
@@ -77,7 +83,10 @@ func Test_DetermineDBType(t *testing.T) {
 		{
 			name:         "Not found",
 			dbIdentifier: "not-found-db",
-			mockSetup: func(c *appmock.MockRDSClient) {
+			mockSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params1 := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("not-found-db"),
 				}
@@ -102,7 +111,10 @@ func Test_DetermineDBType(t *testing.T) {
 		{
 			name:         "Error - DescribeDBClusters",
 			dbIdentifier: "cluster-error-db",
-			mockSetup: func(c *appmock.MockRDSClient) {
+			mockSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params1 := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("cluster-error-db"),
 				}
@@ -110,7 +122,7 @@ func Test_DetermineDBType(t *testing.T) {
 				result1 := &rds.DescribeDBClustersOutput{}
 
 				c.On("DescribeDBClusters", mock.Anything, params1, mock.Anything).
-					Return(result1, fmt.Errorf("Error"))
+					Return(result1, assert.AnError)
 			},
 			expected: "",
 			wantErr:  true,
@@ -118,7 +130,10 @@ func Test_DetermineDBType(t *testing.T) {
 		{
 			name:         "Error - DescribeDBInstances",
 			dbIdentifier: "instance-error-db",
-			mockSetup: func(c *appmock.MockRDSClient) {
+			mockSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params1 := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("instance-error-db"),
 				}
@@ -135,7 +150,7 @@ func Test_DetermineDBType(t *testing.T) {
 				result2 := &rds.DescribeDBInstancesOutput{}
 
 				c.On("DescribeDBInstances", mock.Anything, params2, mock.Anything).
-					Return(result2, fmt.Errorf("Error"))
+					Return(result2, assert.AnError)
 			},
 			expected: "",
 			wantErr:  true,
@@ -144,20 +159,14 @@ func Test_DetermineDBType(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			mockFactory := new(appmock.MockRDSFactory)
 			mockClient := new(appmock.MockRDSClient)
 
-			tc.mockSetup(mockClient)
-
-			mockFactory := new(appmock.MockRDSFactory)
-
-			mockFactory.On("GetClient").Return(mockClient)
+			tc.mockSetup(mockFactory, mockClient)
 
 			r := NewRDS(mockFactory)
 
 			got, err := r.DetermineDBType(tc.dbIdentifier)
-
-			mockClient.AssertExpectations(t)
-			mockFactory.AssertExpectations(t)
 
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
@@ -166,6 +175,9 @@ func Test_DetermineDBType(t *testing.T) {
 
 				assert.Equal(t, tc.expected, got, "DB type detection result does not match expected value")
 			}
+
+			mockFactory.AssertExpectations(t)
+			mockClient.AssertExpectations(t)
 		})
 	}
 }

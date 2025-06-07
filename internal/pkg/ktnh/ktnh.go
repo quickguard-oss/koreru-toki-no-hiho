@@ -103,8 +103,8 @@ func shortenIdentifier(dbIdentifier string) string {
 /*
 generateStackName generates a stack name using the prefix, DB identifier, and qualifier.
 */
-func (s *ktnh) generateStackName(option *stackNameOption) string {
-	items := []string{s.stackNamePrefix}
+func (k *ktnh) generateStackName(option *stackNameOption) string {
+	items := []string{k.stackNamePrefix}
 
 	if option.dbIdentifierShort == "" {
 		items = append(items, ".+")
@@ -129,10 +129,10 @@ func (s *ktnh) generateStackName(option *stackNameOption) string {
 findMatchingStack finds the CloudFormation stack matching the DB identifier.
 Returns the stack name, whether a stack was found, and any error encountered.
 */
-func (s *ktnh) findMatchingStack() (string, bool, error) {
+func (k *ktnh) findMatchingStack() (string, bool, error) {
 	slog.Debug("Finding matching stack")
 
-	dbType, err := s.rds.DetermineDBType(s.dbIdentifier)
+	dbType, err := k.rds.DetermineDBType(k.dbIdentifier)
 
 	if err != nil {
 		return "", false, fmt.Errorf("failed to determine DB type: %w", err)
@@ -140,8 +140,8 @@ func (s *ktnh) findMatchingStack() (string, bool, error) {
 
 	pattern := fmt.Sprintf(
 		"^%s$",
-		s.generateStackName(&stackNameOption{
-			dbIdentifierShort: s.dbIdentifierShort,
+		k.generateStackName(&stackNameOption{
+			dbIdentifierShort: k.dbIdentifierShort,
 		}),
 	)
 
@@ -154,7 +154,7 @@ func (s *ktnh) findMatchingStack() (string, bool, error) {
 	}
 
 	verifyOotion := cfn.MetadataVerifyOption{
-		DBIdentifier: s.dbIdentifier,
+		DBIdentifier: k.dbIdentifier,
 		DBType:       string(dbType),
 	}
 
@@ -165,7 +165,7 @@ func (s *ktnh) findMatchingStack() (string, bool, error) {
 			return false
 		}
 
-		metadata, err := s.cfn.GetKTNHMetadata(stackName)
+		metadata, err := k.cfn.GetKTNHMetadata(stackName)
 
 		if err != nil {
 			slog.Warn("Failed to retrieve metadata for stack during evaluation",
@@ -196,7 +196,7 @@ func (s *ktnh) findMatchingStack() (string, bool, error) {
 		return true
 	}
 
-	stacks, err := s.cfn.ListStacks(evaluator)
+	stacks, err := k.cfn.ListStacks(evaluator)
 
 	if err != nil {
 		return "", false, fmt.Errorf("failed to list CloudFormation stacks: %w", err)

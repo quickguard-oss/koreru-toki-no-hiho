@@ -1,7 +1,6 @@
 package ktnh
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -27,7 +26,7 @@ func Test_Freeze(t *testing.T) {
 		qualifier                string
 		templateBody             string
 		timeout                  time.Duration
-		mockDetermineDBTypeSetup func(*appmock.MockRDSClient)
+		mockDetermineDBTypeSetup func(*appmock.MockRDSFactory, *appmock.MockRDSClient)
 		mockListStacksSetup      func(*appmock.MockCloudFormationFactory, *appmock.MockListStacksPaginator)
 		mockGetTemplateSetup     func(*appmock.MockCloudFormationFactory, *appmock.MockCloudFormationClient)
 		mockCreateStackSetup     func(*appmock.MockCloudFormationClient)
@@ -42,7 +41,10 @@ func Test_Freeze(t *testing.T) {
 			qualifier:         "abcdef",
 			templateBody:      "{a: 1}",
 			timeout:           time.Minute * 5,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-1-1234567890"),
 				}
@@ -143,7 +145,10 @@ Metadata:
 			qualifier:         "ghijkl",
 			templateBody:      "{b: 2}",
 			timeout:           0,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-2-1234567890"),
 				}
@@ -194,7 +199,10 @@ Metadata:
 			qualifier:         "mnopqr",
 			templateBody:      "{c: 3}",
 			timeout:           time.Minute * 5,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-3-1234567890"),
 				}
@@ -202,7 +210,7 @@ Metadata:
 				result := &rds.DescribeDBClustersOutput{}
 
 				c.On("DescribeDBClusters", mock.Anything, params, mock.Anything).
-					Return(result, fmt.Errorf("Error"))
+					Return(result, assert.AnError)
 			},
 			mockListStacksSetup:  func(f *appmock.MockCloudFormationFactory, p *appmock.MockListStacksPaginator) {},
 			mockGetTemplateSetup: func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {},
@@ -218,7 +226,10 @@ Metadata:
 			qualifier:         "stuvwx",
 			templateBody:      "{d: 4}",
 			timeout:           time.Minute * 5,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-4-1234567890"),
 				}
@@ -295,7 +306,10 @@ Metadata:
 			qualifier:         "zyxwvu",
 			templateBody:      "{e: 5}",
 			timeout:           time.Minute * 5,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-5-1234567890"),
 				}
@@ -333,7 +347,7 @@ Metadata:
 				result := &cloudformation.CreateStackOutput{}
 
 				c.On("CreateStack", mock.Anything, params, mock.Anything).
-					Return(result, fmt.Errorf("Error"))
+					Return(result, assert.AnError)
 			},
 			mockWaitSetup: func(f *appmock.MockCloudFormationFactory, w *appmock.MockStackCreateCompleteWaiter) {},
 			wantErr:       true,
@@ -346,7 +360,10 @@ Metadata:
 			qualifier:         "tsrqpo",
 			templateBody:      "{f: 6}",
 			timeout:           time.Minute * 5,
-			mockDetermineDBTypeSetup: func(c *appmock.MockRDSClient) {
+			mockDetermineDBTypeSetup: func(f *appmock.MockRDSFactory, c *appmock.MockRDSClient) {
+				f.On("GetClient").
+					Return(c)
+
 				params := &rds.DescribeDBClustersInput{
 					DBClusterIdentifier: aws.String("db-6-1234567890"),
 				}
@@ -388,7 +405,7 @@ Metadata:
 			},
 			mockWaitSetup: func(f *appmock.MockCloudFormationFactory, w *appmock.MockStackCreateCompleteWaiter) {
 				f.On("NewStackCreateCompleteWaiter").
-					Return(nil, fmt.Errorf("Error"))
+					Return(nil, assert.AnError)
 			},
 			wantErr: true,
 		},
@@ -396,28 +413,17 @@ Metadata:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockClientRDS := new(appmock.MockRDSClient)
-
-			tc.mockDetermineDBTypeSetup(mockClientRDS)
-
 			mockFactoryRDS := new(appmock.MockRDSFactory)
-
-			mockFactoryRDS.On("GetClient").Return(mockClientRDS)
-
+			mockClientRDS := new(appmock.MockRDSClient)
 			mockFactoryCloudFormation := new(appmock.MockCloudFormationFactory)
-
-			mockPaginator := new(appmock.MockListStacksPaginator)
-
-			tc.mockListStacksSetup(mockFactoryCloudFormation, mockPaginator)
-
 			mockClientCloudFormation := new(appmock.MockCloudFormationClient)
-
-			tc.mockGetTemplateSetup(mockFactoryCloudFormation, mockClientCloudFormation)
-
-			tc.mockCreateStackSetup(mockClientCloudFormation)
-
+			mockPaginator := new(appmock.MockListStacksPaginator)
 			mockWaiter := new(appmock.MockStackCreateCompleteWaiter)
 
+			tc.mockDetermineDBTypeSetup(mockFactoryRDS, mockClientRDS)
+			tc.mockListStacksSetup(mockFactoryCloudFormation, mockPaginator)
+			tc.mockGetTemplateSetup(mockFactoryCloudFormation, mockClientCloudFormation)
+			tc.mockCreateStackSetup(mockClientCloudFormation)
 			tc.mockWaitSetup(mockFactoryCloudFormation, mockWaiter)
 
 			k := &ktnh{
@@ -430,19 +436,18 @@ Metadata:
 
 			err := k.Freeze(tc.templateBody, tc.qualifier, tc.timeout)
 
-			mockClientRDS.AssertExpectations(t)
-			mockFactoryRDS.AssertExpectations(t)
-
-			mockClientCloudFormation.AssertExpectations(t)
-			mockPaginator.AssertExpectations(t)
-			mockWaiter.AssertExpectations(t)
-			mockFactoryCloudFormation.AssertExpectations(t)
-
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
 			} else {
 				assert.NoError(t, err, "Unexpected error occurred")
 			}
+
+			mockFactoryRDS.AssertExpectations(t)
+			mockClientRDS.AssertExpectations(t)
+			mockFactoryCloudFormation.AssertExpectations(t)
+			mockClientCloudFormation.AssertExpectations(t)
+			mockPaginator.AssertExpectations(t)
+			mockWaiter.AssertExpectations(t)
 		})
 	}
 }

@@ -9,8 +9,8 @@ import (
 /*
 Defrost deletes the CloudFormation stack associated with the DB identifier.
 */
-func (s *ktnh) Defrost(timeout time.Duration) error {
-	stackName, found, err := s.findMatchingStack()
+func (k *ktnh) Defrost(timeout time.Duration) error {
+	stackName, found, err := k.findMatchingStack()
 
 	if err != nil {
 		return fmt.Errorf("failed to find matching stack: %w", err)
@@ -22,7 +22,7 @@ func (s *ktnh) Defrost(timeout time.Duration) error {
 
 	slog.Info("Found matching CloudFormation stack, deleting", "stackName", stackName)
 
-	err = s.cfn.DeleteStack(stackName)
+	err = k.cfn.DeleteStack(stackName)
 
 	if err != nil {
 		return fmt.Errorf("failed to delete CloudFormation stack: %w", err)
@@ -36,7 +36,7 @@ func (s *ktnh) Defrost(timeout time.Duration) error {
 
 	slog.Info("Waiting for CloudFormation stack deletion to complete", "timeout", timeout.Seconds())
 
-	err = s.cfn.WaitForStackDeletion(stackName, timeout)
+	err = k.cfn.WaitForStackDeletion(stackName, timeout)
 
 	if err != nil {
 		return fmt.Errorf("failed while waiting for stack deletion: %w", err)

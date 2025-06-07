@@ -72,8 +72,8 @@ func formatDatabaseInfoForDisplay(databases []displayDBInfo) []string {
 /*
 List returns a list of managed databases in a human-readable format.
 */
-func (s *ktnh) List() ([]string, error) {
-	databases, err := s.collectManagedDatabases()
+func (k *ktnh) List() ([]string, error) {
+	databases, err := k.collectManagedDatabases()
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to collect managed databases: %w", err)
@@ -85,12 +85,12 @@ func (s *ktnh) List() ([]string, error) {
 /*
 collectManagedDatabases finds all databases managed by ktnh.
 */
-func (s *ktnh) collectManagedDatabases() ([]displayDBInfo, error) {
+func (k *ktnh) collectManagedDatabases() ([]displayDBInfo, error) {
 	slog.Debug("Finding all managed databases")
 
 	pattern := fmt.Sprintf(
 		"^%s$",
-		s.generateStackName(&stackNameOption{}),
+		k.generateStackName(&stackNameOption{}),
 	)
 
 	slog.Debug("Generated stack name pattern for matching", "pattern", pattern)
@@ -112,7 +112,7 @@ func (s *ktnh) collectManagedDatabases() ([]displayDBInfo, error) {
 			return false
 		}
 
-		metadata, err := s.cfn.GetKTNHMetadata(stackName)
+		metadata, err := k.cfn.GetKTNHMetadata(stackName)
 
 		if err != nil {
 			slog.Warn("Failed to retrieve metadata for stack during evaluation",
@@ -149,7 +149,7 @@ func (s *ktnh) collectManagedDatabases() ([]displayDBInfo, error) {
 		return true
 	}
 
-	_, err = s.cfn.ListStacks(evaluator)
+	_, err = k.cfn.ListStacks(evaluator)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to list CloudFormation stacks: %w", err)

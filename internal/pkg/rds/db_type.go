@@ -77,12 +77,12 @@ func (r *RDS) DetermineDBType(dbIdentifier string) (dbType, error) {
 /*
 isAuroraCluster checks if the DB identifier is an Aurora cluster.
 */
-func (s *RDS) isAuroraCluster(dbIdentifier string) (bool, error) {
+func (r *RDS) isAuroraCluster(dbIdentifier string) (bool, error) {
 	slog.Debug("Checking if DB is Aurora cluster")
 
 	ctx := context.Background()
 
-	output, err := s.factory.GetClient().DescribeDBClusters(ctx, &rds.DescribeDBClustersInput{
+	output, err := r.factory.GetClient().DescribeDBClusters(ctx, &rds.DescribeDBClustersInput{
 		DBClusterIdentifier: aws.String(dbIdentifier),
 	})
 
@@ -118,12 +118,12 @@ func (s *RDS) isAuroraCluster(dbIdentifier string) (bool, error) {
 /*
 isRDSInstance checks if the DB identifier is an RDS instance.
 */
-func (s *RDS) isRDSInstance(dbIdentifier string) (bool, error) {
+func (r *RDS) isRDSInstance(dbIdentifier string) (bool, error) {
 	slog.Debug("Checking if DB is RDS instance")
 
 	ctx := context.Background()
 
-	output, err := s.factory.GetClient().DescribeDBInstances(ctx, &rds.DescribeDBInstancesInput{
+	output, err := r.factory.GetClient().DescribeDBInstances(ctx, &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(dbIdentifier),
 	})
 
