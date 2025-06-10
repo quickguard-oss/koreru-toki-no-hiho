@@ -37,8 +37,5 @@ archives:
       - './README.md'
       - './licenses/**/*'
 
-changelog:
-  sort: 'asc'
-
 checksum:
   name_template: 'checksums.txt'
