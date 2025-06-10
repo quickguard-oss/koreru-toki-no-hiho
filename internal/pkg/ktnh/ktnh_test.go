@@ -1,6 +1,7 @@
 package ktnh
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -201,14 +202,14 @@ func Test_findMatchingStack(t *testing.T) {
 					StackName: aws.String("A-db-1-12345-abcdef"),
 				}
 
-				templateBody1 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db-1-1234567890'
-    DBType: 'aurora'
-`
+				templateBody1 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db-1-1234567890'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result1 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody1),
@@ -222,14 +223,14 @@ Metadata:
 					StackName: aws.String("A-db-1-12345-mnopqr"),
 				}
 
-				templateBody2 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db-1-1234567890'
-    DBType: 'rds'
-`
+				templateBody2 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db-1-1234567890'",
+					"    DBType: 'rds'",
+				}, "\n")
 
 				result2 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody2),
@@ -438,14 +439,14 @@ Metadata:
 					StackName: aws.String("E-db-6-12345-abcdef"),
 				}
 
-				templateBody1 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db-6-1234567890'
-    DBType: 'aurora'
-`
+				templateBody1 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db-6-1234567890'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result1 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody1),
@@ -459,14 +460,14 @@ Metadata:
 					StackName: aws.String("E-db-6-12345-ghijkl"),
 				}
 
-				templateBody2 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db-6-1234567890'
-    DBType: 'aurora'
-`
+				templateBody2 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db-6-1234567890'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result2 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody2),
@@ -549,14 +550,14 @@ Metadata:
 					StackName: aws.String("F-db-7-12345-ghijkl"),
 				}
 
-				templateBody2 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db-7-1234567890'
-    DBType: 'aurora'
-`
+				templateBody2 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db-7-1234567890'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result2 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody2),
@@ -629,13 +630,13 @@ Metadata:
 					StackName: aws.String("G-db-8-12345-mnopqr"),
 				}
 
-				templateBody1 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db-8-1234567890'
-`
+				templateBody1 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db-8-1234567890'",
+				}, "\n")
 
 				result1 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody1),
@@ -649,14 +650,14 @@ Metadata:
 					StackName: aws.String("G-db-8-12345-stuvwx"),
 				}
 
-				templateBody2 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db-8-1234567890'
-    DBType: 'aurora'
-`
+				templateBody2 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db-8-1234567890'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result2 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody2),

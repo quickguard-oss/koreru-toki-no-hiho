@@ -1,6 +1,7 @@
 package cfn
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -30,14 +31,14 @@ func Test_GetKTNHMetadata(t *testing.T) {
 					StackName: aws.String("valid-stack"),
 				}
 
-				templateBody := `
-Metadata:
-  KTNH:
-    Generator: 'test-generator'
-    Version: '10'
-    DBIdentifier: 'test-db'
-    DBType: 'aurora'
-`
+				templateBody := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'test-generator'",
+					"    Version: '10'",
+					"    DBIdentifier: 'test-db'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody),

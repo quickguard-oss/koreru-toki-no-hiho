@@ -1,6 +1,7 @@
 package ktnh
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -71,14 +72,14 @@ func Test_List(t *testing.T) {
 					StackName: aws.String("A-db1-abcdef"),
 				}
 
-				templateBody1 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db1'
-    DBType: 'aurora'
-`
+				templateBody1 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db1'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result1 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody1),
@@ -92,14 +93,14 @@ Metadata:
 					StackName: aws.String("A-db3-mnopqr"),
 				}
 
-				templateBody3 := `
-Metadata:
-  KTNH:
-    Generator: 'test-generator'
-    Version: '1'
-    DBIdentifier: 'db3'
-    DBType: 'aurora'
-`
+				templateBody3 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'test-generator'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db3'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result3 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody3),
@@ -113,14 +114,14 @@ Metadata:
 					StackName: aws.String("A-db4-stuvwx"),
 				}
 
-				templateBody4 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db4'
-    DBType: 'rds'
-`
+				templateBody4 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db4'",
+					"    DBType: 'rds'",
+				}, "\n")
 
 				result4 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody4),
@@ -312,14 +313,14 @@ Metadata:
 					StackName: aws.String("D-db2-ghijkl"),
 				}
 
-				templateBody2 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db2'
-    DBType: 'aurora'
-`
+				templateBody2 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db2'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result2 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody2),
@@ -436,13 +437,13 @@ Metadata:
 					StackName: aws.String("E-db1-abcdef"),
 				}
 
-				templateBody1 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db1'
-`
+				templateBody1 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db1'",
+				}, "\n")
 
 				result1 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody1),
@@ -456,14 +457,14 @@ Metadata:
 					StackName: aws.String("E-db2-ghijkl"),
 				}
 
-				templateBody2 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db2'
-    DBType: 'aurora'
-`
+				templateBody2 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db2'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result2 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody2),
@@ -577,14 +578,14 @@ Metadata:
 					StackName: aws.String("F-db1-abcdef"),
 				}
 
-				templateBody1 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db1'
-    DBType: 'aurora'
-`
+				templateBody1 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db1'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result1 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody1),
@@ -650,14 +651,14 @@ Metadata:
 					StackName: aws.String("G-db1-abcdef"),
 				}
 
-				templateBody1 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db1'
-    DBType: 'rds'
-`
+				templateBody1 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db1'",
+					"    DBType: 'rds'",
+				}, "\n")
 
 				result1 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody1),

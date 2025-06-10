@@ -15,7 +15,7 @@ GetClusterMembers retrieves all DB instances that belong to the given DB cluster
 It returns a map where the key is the cluster ID and the value is a slice of instance IDs.
 */
 func (r *RDS) GetClusterMembers(clusters []string) (map[string][]string, error) {
-	result := map[string][]string{}
+	result := make(map[string][]string, len(clusters))
 
 	if len(clusters) == 0 {
 		return result, nil

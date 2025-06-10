@@ -1,6 +1,7 @@
 package ktnh
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -95,14 +96,14 @@ func Test_Freeze(t *testing.T) {
 					StackName: aws.String("A-db-1-12345-mnopqr"),
 				}
 
-				templateBody1 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db-1-1234567890'
-    DBType: 'rds'
-`
+				templateBody1 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db-1-1234567890'",
+					"    DBType: 'rds'",
+				}, "\n")
 
 				result1 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody1),
@@ -277,14 +278,14 @@ Metadata:
 					StackName: aws.String("D-db-4-12345-stuvwx"),
 				}
 
-				templateBody1 := `
-Metadata:
-  KTNH:
-    Generator: 'koreru-toki-no-hiho'
-    Version: '1'
-    DBIdentifier: 'db-4-1234567890'
-    DBType: 'aurora'
-`
+				templateBody1 := strings.Join([]string{
+					"Metadata:",
+					"  KTNH:",
+					"    Generator: 'koreru-toki-no-hiho'",
+					"    Version: '1'",
+					"    DBIdentifier: 'db-4-1234567890'",
+					"    DBType: 'aurora'",
+				}, "\n")
 
 				result1 := &cloudformation.GetTemplateOutput{
 					TemplateBody: aws.String(templateBody1),
