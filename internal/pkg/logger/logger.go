@@ -22,16 +22,17 @@ var output io.Writer = os.Stderr
 SetLogger configures the default logger with the specified log level and format.
 */
 func SetLogger(isDebug bool, isJson bool) {
-	var level slog.Level
+	var option *slog.HandlerOptions
 
 	if isDebug {
-		level = slog.LevelDebug
+		option = &slog.HandlerOptions{
+			Level:     slog.LevelDebug,
+			AddSource: true,
+		}
 	} else {
-		level = slog.LevelInfo
-	}
-
-	option := &slog.HandlerOptions{
-		Level: level,
+		option = &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}
 	}
 
 	var handler slog.Handler
