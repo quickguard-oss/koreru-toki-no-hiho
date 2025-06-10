@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/quickguard-oss/koreru-toki-no-hiho/internal/pkg/ktnh"
+	"github.com/quickguard-oss/koreru-toki-no-hiho/internal/pkg/logger"
 )
 
 var listCmd = &cobra.Command{
@@ -21,21 +22,31 @@ var listCmd = &cobra.Command{
 			return fmt.Errorf("failed to initialize ktnh instance: %w", err)
 		}
 
-		lines, err := k.List()
+		headers, body, err := k.List()
 
 		if err != nil {
 			return fmt.Errorf("failed to list managed databases: %w", err)
 		}
 
-		if len(lines) == 0 {
+		if len(body) == 0 {
 			slog.Info("No databases are currently being managed by ktnh")
 
 			return nil
 		}
 
-		for _, line := range lines {
-			cmd.Println(line)
+		var output string
+
+		if jsonLogFlag {
+			output, err = logger.FormatAsJSON(headers, body)
+
+			if err != nil {
+				return fmt.Errorf("failed to format output as JSON: %w", err)
+			}
+		} else {
+			output = logger.FormatAsTable(headers, body)
 		}
+
+		cmd.Println(output)
 
 		return nil
 	},

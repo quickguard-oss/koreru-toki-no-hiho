@@ -19,59 +19,14 @@ type displayDBInfo struct {
 }
 
 /*
-Constants for list command table headers
+convertDBsToStringRows transforms database information into a string slice.
+It returns a header slice containing column names and a 2D slice
+where each inner slice represents a row of database information.
 */
-const (
-	headerDBIdentifier   = "ID"
-	headerDBType         = "TYPE"
-	headerStackName      = "STACK"
-	headerHasMaintenance = "MAINTENANCE"
-)
+func convertDBsToStringRows(databases []displayDBInfo, isShowMaintenance bool) ([]string, [][]string) {
+	slog.Debug("Converting databases information to string rows")
 
-/*
-formatDatabaseInfoForDisplay formats the databases information for display purposes.
-Each database's information is presented in ASCII table format for user-friendly console output.
-It returns a slice of strings where each string represents a row in the table.
-*/
-func formatDatabaseInfoForDisplay(databases []displayDBInfo, isShowMaintenance bool) []string {
-	slog.Debug("Formatting databases information for display output")
-
-	if len(databases) == 0 {
-		slog.Debug("No managed databases found")
-
-		return []string{}
-	}
-
-	dbIdentifierMaxWidth := len(headerDBIdentifier)
-	dbTypeMaxWidth := len(headerDBType)
-	stackNameMaxWidth := len(headerStackName)
-
-	for _, db := range databases {
-		if dbIdentifierMaxWidth < len(db.dbIdentifier) {
-			dbIdentifierMaxWidth = len(db.dbIdentifier)
-		}
-
-		if dbTypeMaxWidth < len(db.dbType) {
-			dbTypeMaxWidth = len(db.dbType)
-		}
-
-		if stackNameMaxWidth < len(db.stackName) {
-			stackNameMaxWidth = len(db.stackName)
-		}
-	}
-
-	// NOTE: Create format string like "%-10s" for left-aligned display
-	rowFormat := fmt.Sprintf(
-		"%%-%ds   %%-%ds   %%-%ds   %%s",
-		dbIdentifierMaxWidth, dbTypeMaxWidth, stackNameMaxWidth,
-	)
-
-	lines := make([]string, len(databases)+1)
-
-	lines[0] = fmt.Sprintf(
-		rowFormat,
-		headerDBIdentifier, headerDBType, headerStackName, headerHasMaintenance,
-	)
+	body := make([][]string, len(databases))
 
 	for i, db := range databases {
 		var maintenanceStatus string
@@ -86,25 +41,27 @@ func formatDatabaseInfoForDisplay(databases []displayDBInfo, isShowMaintenance b
 			maintenanceStatus = "(unknown)"
 		}
 
-		lines[i+1] = fmt.Sprintf(
-			rowFormat,
-			db.dbIdentifier, db.dbType, db.stackName, maintenanceStatus,
-		)
+		body[i] = []string{
+			db.dbIdentifier,
+			db.dbType,
+			db.stackName,
+			maintenanceStatus,
+		}
 	}
 
-	slog.Debug("Formatted databases information for output")
+	slog.Debug("Converted databases information to string rows")
 
-	return lines
+	return []string{"id", "type", "stack", "maintenance"}, body
 }
 
 /*
-List returns a list of managed databases in a human-readable format.
+List returns a list of managed databases.
 */
-func (k *ktnh) List() ([]string, error) {
+func (k *ktnh) List() ([]string, [][]string, error) {
 	databases, err := k.collectManagedDatabases()
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect managed databases: %w", err)
+		return nil, nil, fmt.Errorf("failed to collect managed databases: %w", err)
 	}
 
 	isShowMaintenance := true
@@ -117,7 +74,9 @@ func (k *ktnh) List() ([]string, error) {
 		isShowMaintenance = false
 	}
 
-	return formatDatabaseInfoForDisplay(databasesWithMaintenance, isShowMaintenance), nil
+	headers, body := convertDBsToStringRows(databasesWithMaintenance, isShowMaintenance)
+
+	return headers, body, nil
 }
 
 /*

@@ -24,7 +24,7 @@ func Test_List(t *testing.T) {
 		mockGetTemplateSetup                       func(*appmock.MockCloudFormationFactory, *appmock.MockCloudFormationClient)
 		mockDescribeDBClustersSetup                func(*appmock.MockRDSFactory, *appmock.MockDescribeDBClustersPaginator)
 		mockDescribePendingMaintenanceActionsSetup func(*appmock.MockRDSFactory, *appmock.MockDescribePendingMaintenanceActionsPaginator)
-		expected                                   []string
+		expected                                   [][]string
 		wantErr                                    bool
 	}{
 		{
@@ -206,10 +206,9 @@ Metadata:
 					Return(false).
 					Once()
 			},
-			expected: []string{
-				"ID    TYPE     STACK          MAINTENANCE",
-				"db1   aurora   A-db1-abcdef   pending",
-				"db4   rds      A-db4-stuvwx   none",
+			expected: [][]string{
+				{"db1", "aurora", "A-db1-abcdef", "pending"},
+				{"db4", "rds", "A-db4-stuvwx", "none"},
 			},
 			wantErr: false,
 		},
@@ -239,7 +238,7 @@ Metadata:
 			mockGetTemplateSetup:                       func(f *appmock.MockCloudFormationFactory, c *appmock.MockCloudFormationClient) {},
 			mockDescribeDBClustersSetup:                func(f *appmock.MockRDSFactory, p *appmock.MockDescribeDBClustersPaginator) {},
 			mockDescribePendingMaintenanceActionsSetup: func(f *appmock.MockRDSFactory, p *appmock.MockDescribePendingMaintenanceActionsPaginator) {},
-			expected: []string{},
+			expected: [][]string{},
 			wantErr:  false,
 		},
 		{
@@ -394,9 +393,8 @@ Metadata:
 					Return(false).
 					Once()
 			},
-			expected: []string{
-				"ID    TYPE     STACK          MAINTENANCE",
-				"db2   aurora   D-db2-ghijkl   none",
+			expected: [][]string{
+				{"db2", "aurora", "D-db2-ghijkl", "none"},
 			},
 			wantErr: false,
 		},
@@ -539,9 +537,8 @@ Metadata:
 					Return(false).
 					Once()
 			},
-			expected: []string{
-				"ID    TYPE     STACK          MAINTENANCE",
-				"db2   aurora   E-db2-ghijkl   none",
+			expected: [][]string{
+				{"db2", "aurora", "E-db2-ghijkl", "none"},
 			},
 			wantErr: false,
 		},
@@ -613,9 +610,8 @@ Metadata:
 					Return(nil, assert.AnError)
 			},
 			mockDescribePendingMaintenanceActionsSetup: func(f *appmock.MockRDSFactory, p *appmock.MockDescribePendingMaintenanceActionsPaginator) {},
-			expected: []string{
-				"ID    TYPE     STACK          MAINTENANCE",
-				"db1   aurora   F-db1-abcdef   (unknown)",
+			expected: [][]string{
+				{"db1", "aurora", "F-db1-abcdef", "(unknown)"},
 			},
 			wantErr: false,
 		},
@@ -691,9 +687,8 @@ Metadata:
 				f.On("NewDescribePendingMaintenanceActionsPaginator", params).
 					Return(nil, assert.AnError)
 			},
-			expected: []string{
-				"ID    TYPE   STACK          MAINTENANCE",
-				"db1   rds    G-db1-abcdef   (unknown)",
+			expected: [][]string{
+				{"db1", "rds", "G-db1-abcdef", "(unknown)"},
 			},
 			wantErr: false,
 		},
@@ -719,14 +714,14 @@ Metadata:
 				cfn:             appcfn.NewCloudFormation(mockFactoryCloudFormation),
 			}
 
-			got, err := k.List()
+			_, got, err := k.List()
 
 			if tc.wantErr {
 				assert.Error(t, err, "Expected an error to be returned")
 			} else {
 				assert.NoError(t, err, "Unexpected error occurred")
 
-				assert.Equal(t, tc.expected, got, "Output lines do not match expected lines")
+				assert.Equal(t, tc.expected, got, "Output body does not match expected body")
 			}
 
 			mockFactoryRDS.AssertExpectations(t)

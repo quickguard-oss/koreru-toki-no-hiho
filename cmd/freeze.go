@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/quickguard-oss/koreru-toki-no-hiho/internal/pkg/ktnh"
+	"github.com/quickguard-oss/koreru-toki-no-hiho/internal/pkg/logger"
 )
 
 var (
@@ -34,7 +35,19 @@ var freezeCmd = &cobra.Command{
 		}
 
 		if templateFlag {
-			cmd.Println(templateBody)
+			var output string
+
+			if jsonLogFlag {
+				output, err = logger.FormatAsJSON([]string{"content"}, [][]string{{templateBody}})
+
+				if err != nil {
+					return fmt.Errorf("failed to format template as JSON: %w", err)
+				}
+			} else {
+				output = templateBody
+			}
+
+			cmd.Println(output)
 
 			return nil
 		}
