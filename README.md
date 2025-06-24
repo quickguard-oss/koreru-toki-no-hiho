@@ -45,37 +45,45 @@ graph TD
 | EventBridge Rule      | Catches Aurora/RDS startup events and triggers the stop process    |
 | EventBridge Scheduler | Periodically invokes the stop process as a supplementary mechanism |
 
-1. Step Functions workflow:
+### Step Functions workflow
 
-   ```mermaid
-    stateDiagram-v2
-      [*] --> Setup
-      Setup --> DescribeDBStatus
-      DescribeDBStatus --> CheckDBStatus
-      state IfStatus <<choice>>
-      CheckDBStatus --> IfStatus
-      IfStatus --> WaitForDBAvailable: If DB is starting
-      IfStatus --> StopDB: If DB is running
-      IfStatus --> DBNotAvailable: If DB is already stopped
-      WaitForDBAvailable --> DescribeDBStatus
-      StopDB --> [*]
-      DBNotAvailable --> [*]
-   ```
+```mermaid
+ stateDiagram-v2
+   [*] --> Setup
+   Setup --> DescribeDBStatus: Initialize counter=0
+   DescribeDBStatus --> CheckDBStatus
+   state IfStatus <<choice>>
+   CheckDBStatus --> IfStatus
+   IfStatus --> IncrementStoppedCount: If DB is already stopped
+   IfStatus --> WaitForDBAvailable: If DB is starting
+   IfStatus --> StopDB: If DB is running
+   IfStatus --> DBNotAvailable: If 1 <= counter
+   IncrementStoppedCount --> WaitForDBAvailable: Increment counter++
+   WaitForDBAvailable --> DescribeDBStatus
+   StopDB --> [*]
+   DBNotAvailable --> [*]
+```
 
-   - Retrieves the current status of the database
-   - If the database is in 'starting' or transitional state, waits for a predefined interval
-   - Re-checks the status until the database is fully 'available'
-   - Once available, executes the stop command
+- Retrieves the current status of the database
+- If the database is in 'starting' or transitional state, waits for a predefined interval
+- Re-checks the status until the database is fully 'available'
+- Once available, executes the stop command
+- If the database is in another state (not available and not in transitional state), increments a counter
+- After the counter reaches a threshold, concludes the database is not available
 
-2. Event detection:
+> [!NOTE]
+> The counter is implemented because there are cases where even after the DB startup event is fired, the DB status remains 'stopped' for a while.  
+> Therefore, we need to provide some grace period for determining that the DB is actually stopped.
 
-   - EventBridge Rule monitors for Aurora/RDS startup events
-   - When detected, it triggers the Step Functions state machine
+### Event detection
 
-3. Periodic checks:
+- EventBridge Rule monitors for Aurora/RDS startup events
+- When detected, it triggers the Step Functions state machine
 
-   - As a supplementary mechanism, EventBridge Scheduler periodically invokes the same Step Functions state machine
-   - This ensures the database remains stopped even if an event was missed
+### Periodic checks
+
+- As a supplementary mechanism, EventBridge Scheduler periodically invokes the same Step Functions state machine
+- This ensures the database remains stopped even if an event was missed
 
 ## Usage
 
@@ -150,15 +158,15 @@ The `MAINTENANCE` column indicates whether there are pending maintenance actions
 - `pending`: Indicates that there are maintenance actions waiting to be applied
 - `none`: Indicates that there are no pending maintenance actions
 
-koreru-toki-no-hiho does not categorize maintenance items as `available` or `required`.    
-It simply indicates whether maintenance is pending or not.    
+koreru-toki-no-hiho does not categorize maintenance items as `available` or `required`.  
+It simply indicates whether maintenance is pending or not.  
 For detailed information about specific maintenance items, please check the AWS Management Console or use the AWS CLI.
 
-For Aurora clusters, ktnh checks not only the cluster itself but also each of its member instances.    
+For Aurora clusters, ktnh checks not only the cluster itself but also each of its member instances.  
 If either the cluster or any of its member instances has maintenance items, the cluster will be marked as `pending`.
 
 > [!IMPORTANT]
-> When a database is in a stopped state, maintenance items are not automatically applied.
+> When a database is in a stopped state, maintenance items are not automatically applied.  
 > It is strongly recommended to periodically unfreeze your databases to provide opportunities for applying maintenance, especially for critical security updates.
 
 ### Release a database from indefinite stopped state
