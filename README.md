@@ -136,6 +136,31 @@ $ ktnh freeze <db-identifier> --wait-timeout <duration>
 $ ktnh list
 ```
 
+Example:
+
+```bash
+$ ktnh list
+ID            TYPE     STACK                  MAINTENANCE
+db-abc        aurora   ktnh-db-abc-YK7W3W     pending
+db-123-test   rds      ktnh-db-123-t-LMPZWG   none
+```
+
+The `MAINTENANCE` column indicates whether there are pending maintenance actions for each database:
+
+- `pending`: Indicates that there are maintenance actions waiting to be applied
+- `none`: Indicates that there are no pending maintenance actions
+
+koreru-toki-no-hiho does not categorize maintenance items as `available` or `required`.    
+It simply indicates whether maintenance is pending or not.    
+For detailed information about specific maintenance items, please check the AWS Management Console or use the AWS CLI.
+
+For Aurora clusters, ktnh checks not only the cluster itself but also each of its member instances.    
+If either the cluster or any of its member instances has maintenance items, the cluster will be marked as `pending`.
+
+> [!IMPORTANT]
+> When a database is in a stopped state, maintenance items are not automatically applied.
+> It is strongly recommended to periodically unfreeze your databases to provide opportunities for applying maintenance, especially for critical security updates.
+
 ### Release a database from indefinite stopped state
 
 ```bash
