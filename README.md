@@ -158,15 +158,15 @@ The `MAINTENANCE` column indicates whether there are pending maintenance actions
 - `pending`: Indicates that there are maintenance actions waiting to be applied
 - `none`: Indicates that there are no pending maintenance actions
 
-koreru-toki-no-hiho does not categorize maintenance items as `available` or `required`.  
+koreru-toki-no-hiho does not categorize maintenance actions as `available` or `required`.  
 It simply indicates whether maintenance is pending or not.  
-For detailed information about specific maintenance items, please check the AWS Management Console or use the AWS CLI.
+For detailed information about specific maintenance actions, please check the AWS Management Console or use the AWS CLI.
 
 For Aurora clusters, ktnh checks not only the cluster itself but also each of its member instances.  
-If either the cluster or any of its member instances has maintenance items, the cluster will be marked as `pending`.
+If either the cluster or any of its member instances has maintenance actions, the cluster will be marked as `pending`.
 
 > [!IMPORTANT]
-> When a database is in a stopped state, maintenance items are not automatically applied.  
+> When a database is in a stopped state, maintenance actions are not automatically applied.  
 > It is strongly recommended to periodically unfreeze your databases to provide opportunities for applying maintenance, especially for critical security updates.
 
 ### Release a database from indefinite stopped state
