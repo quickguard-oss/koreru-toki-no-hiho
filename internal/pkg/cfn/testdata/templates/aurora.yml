@@ -89,7 +89,8 @@ Resources:
                     "upgrading"
                   ],
                   "available": ["available"]
-                }
+                },
+                "stoppedCount": 0
               },
               "Next": "DescribeDBStatus"
             },
@@ -111,9 +112,20 @@ Resources:
                 {
                   "Condition": "{% $states.input.DbClusters[0].Status in $dbStatus.available %}",
                   "Next": "StopDB"
+                },
+                {
+                  "Condition": "{% 1 <= $stoppedCount %}",
+                  "Next": "DBNotAvailable"
                 }
               ],
-              "Default": "DBNotAvailable"
+              "Default": "IncrementStoppedCount"
+            },
+            "IncrementStoppedCount": {
+              "Type": "Pass",
+              "Assign": {
+                "stoppedCount": "{% $stoppedCount + 1 %}"
+              },
+              "Next": "WaitForDBAvailable"
             },
             "DBNotAvailable": {
               "Type": "Succeed"

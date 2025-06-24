@@ -34,7 +34,8 @@
             "restore-error",
             "storage-full"
           ]
-        }
+        },
+        "stoppedCount": 0
       },
       "Next": "DescribeDBStatus"
     },
@@ -56,9 +57,20 @@
         {
           "Condition": "{% $states.input.DbInstances[0].DbInstanceStatus in $dbStatus.available %}",
           "Next": "StopDB"
+        },
+        {
+          "Condition": "{% 1 <= $stoppedCount %}",
+          "Next": "DBNotAvailable"
         }
       ],
-      "Default": "DBNotAvailable"
+      "Default": "IncrementStoppedCount"
+    },
+    "IncrementStoppedCount": {
+      "Type": "Pass",
+      "Assign": {
+        "stoppedCount": "{% $stoppedCount + 1 %}"
+      },
+      "Next": "WaitForDBAvailable"
     },
     "DBNotAvailable": {
       "Type": "Succeed"

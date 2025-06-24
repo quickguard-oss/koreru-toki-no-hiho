@@ -32,7 +32,8 @@ const templateStr = `
             "upgrading"
           ],
           "available": ["available"]
-        }
+        },
+        "stoppedCount": 0
       },
       "Next": "DescribeDBStatus"
     },
@@ -54,9 +55,20 @@ const templateStr = `
         {
           "Condition": "{% $states.input.DbClusters[0].Status in $dbStatus.available %}",
           "Next": "StopDB"
+        },
+        {
+          "Condition": "{% 1 <= $stoppedCount %}",
+          "Next": "DBNotAvailable"
         }
       ],
-      "Default": "DBNotAvailable"
+      "Default": "IncrementStoppedCount"
+    },
+    "IncrementStoppedCount": {
+      "Type": "Pass",
+      "Assign": {
+        "stoppedCount": "{% $stoppedCount + 1 %}"
+      },
+      "Next": "WaitForDBAvailable"
     },
     "DBNotAvailable": {
       "Type": "Succeed"
@@ -116,7 +128,8 @@ const templateStr = `
             "restore-error",
             "storage-full"
           ]
-        }
+        },
+        "stoppedCount": 0
       },
       "Next": "DescribeDBStatus"
     },
@@ -138,9 +151,20 @@ const templateStr = `
         {
           "Condition": "{% $states.input.DbInstances[0].DbInstanceStatus in $dbStatus.available %}",
           "Next": "StopDB"
+        },
+        {
+          "Condition": "{% 1 <= $stoppedCount %}",
+          "Next": "DBNotAvailable"
         }
       ],
-      "Default": "DBNotAvailable"
+      "Default": "IncrementStoppedCount"
+    },
+    "IncrementStoppedCount": {
+      "Type": "Pass",
+      "Assign": {
+        "stoppedCount": "{% $stoppedCount + 1 %}"
+      },
+      "Next": "WaitForDBAvailable"
     },
     "DBNotAvailable": {
       "Type": "Succeed"
