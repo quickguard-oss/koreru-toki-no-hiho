@@ -5,7 +5,7 @@ go 1.24.1
 require (
 	github.com/aws/aws-sdk-go-v2 v1.40.0
 	github.com/aws/aws-sdk-go-v2/config v1.31.21
-	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.70.0
+	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.70.1
 	github.com/aws/aws-sdk-go-v2/service/rds v1.109.1
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
