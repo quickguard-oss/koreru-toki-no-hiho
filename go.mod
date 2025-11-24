@@ -1,6 +1,6 @@
 module github.com/quickguard-oss/koreru-toki-no-hiho
 
-go 1.24.1
+go 1.25.4
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.40.0
