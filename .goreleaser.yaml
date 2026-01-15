@@ -5,6 +5,7 @@ version: 2
 builds:
   - binary: 'ktnh'
     flags:
+      - '-trimpath'
       - '-v'
     ldflags:
       - '-s'
